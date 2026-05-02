@@ -1,0 +1,16 @@
+definition_version: 2
+
+entities:
+  payments_hub_app:
+    type: streamlit
+    identifier:
+      name: PAYMENTS_HUB_APP
+      schema: APP
+      database: FSI_PAYMENTS
+    title: "Singapore Payments Hub"
+    comment: "Singapore FSI Demo — Dynamic Tables + Bedrock + QuickSight"
+    query_warehouse: WH_PAYMENTS
+    main_file: streamlit_app.py
+    stage: FSI_PAYMENTS.APP.STREAMLIT_STAGE
+    artifacts:
+      - streamlit_app.py
