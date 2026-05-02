@@ -1,86 +1,117 @@
 # Demo Script: Singapore Cross-Border Payments Hub
-
-## Duration: 3.5 minutes (recorded demo)
-
----
-
-## Act 1: The Problem (0:00 - 0:30)
-
-### Voiceover:
-"Singapore processes billions in cross-border payments daily through FAST, PayNow, SWIFT, and GIRO. Each payment type has different SLAs — PayNow must settle in 5 minutes, SWIFT in 4 hours. When exceptions occur — sanctions hits, AML holds, timeouts — every minute of delay costs money and risks regulatory breach. How do you monitor 500+ payments per hour and resolve exceptions before SLAs are breached?"
-
-### Visual:
-Architecture diagram showing payment flow: Kinesis/S3 → Snowflake Dynamic Tables → Bedrock → QuickSight.
+## 3.5-Minute Recorded Walkthrough
+**Format**: Screen recording with voiceover
+**Target**: Customer meeting / booth loop / social share
+**Pre-requisites**: Data loaded, Streamlit deployed, QuickSight datasets created
 
 ---
 
-## Act 2: Data Pipeline (0:30 - 1:00)
+## What's Built
 
-### Voiceover:
-"Payment messages stream from clearing systems into Snowflake via Snowpipe. Dynamic Tables automatically enrich each payment with FX conversion, settlement status, and SLA deadline calculation. The exception queue prioritizes by severity and age — all refreshing every 5 minutes with zero orchestration."
+| Layer | Component | Detail |
+|---|---|---|
+| **Ingest (AWS)** | Amazon S3 / Kinesis | Payment messages, settlement confirmations, FX rates |
+| **RAW** | 4 tables | PAYMENTS_RAW (500), SETTLEMENTS_RAW (500), FX_RATES_RAW (100), EXCEPTIONS_RAW (40) |
+| **CURATED** | 3 Dynamic Tables | PAYMENT_ENRICHED (FX + SLA calc), CORRIDOR_STATS (aggregates), EXCEPTION_QUEUE (open, prioritized) |
+| **AI** | Bedrock SP | ANALYZE_EXCEPTION — intelligent exception triage and resolution |
+| **Consumption** | Streamlit | 4-tab Payments Ops app |
+| | QuickSight | 2 datasets + Q Topic for executive NLP queries |
 
-### Visual:
-Snowsight showing:
-- RAW: 500 payments, 500 settlements, 100 FX rates, 40 exceptions
-- CURATED Dynamic Tables: PAYMENT_ENRICHED (500 rows), CORRIDOR_STATS, EXCEPTION_QUEUE (26 open)
-- Highlight the SLA_STATUS column: ON_TIME, AT_RISK, BREACHED
-
----
-
-## Act 3: Persona 1 — Payments Ops (1:00 - 2:30)
-
-### Scene 1: Payment Monitor (1:00 - 1:30)
-**Voiceover:** "The operations dashboard shows real-time KPIs: 500 payments, $XX million volume, 90%+ success rate. Volume by corridor shows SG-MY as the highest — consistent with Singapore-Malaysia remittance flows."
-
-**Action:** Tab 1 → Show KPIs → Corridor volume chart → Recent payments table with status badges
-
-### Scene 2: Exception Queue (1:30 - 2:10)
-**Voiceover:** "26 open exceptions need attention. Filter to CRITICAL — a sanctions hit on a SG-HK corridor payment of SGD 420,000. The beneficiary name partially matches the OFAC SDN list. One click sends this to Amazon Bedrock for analysis."
-
-**Action:** Tab 3 → Filter to sanctions hit → Click "Analyze with Amazon Bedrock" → Show recommended action (ESCALATE), resolution steps, regulatory considerations
-
-### Scene 3: Settlement Tracker (2:10 - 2:30)
-**Voiceover:** "The settlement tracker shows SLA compliance at a glance. FAST payments averaging 8 seconds settlement. SWIFT at 2 hours — well within the 4-hour SLA. Bank reconciliation confirms DBS as the highest volume sender."
-
-**Action:** Tab 2 → Show SLA progress bar → Performance by type table → Bank reconciliation
+**Corridors**: SG-SG, SG-MY, SG-ID, SG-TH, SG-HK, SG-PH
+**Banks**: DBS, OCBC, UOB, HSBC, Standard Chartered
+**Payment Types**: FAST (15 min SLA), PayNow (5 min), SWIFT (4 hours), GIRO (24 hours)
 
 ---
 
-## Act 4: Analytics (2:30 - 3:15)
+## Pre-Recording Checklist
 
-### Voiceover:
-"The analytics tab provides corridor-level intelligence: success rates, average latency, exception distribution. FX rates update in real-time. This is the data that feeds into QuickSight for the executive view — the CFO sees revenue by corridor, the CRO sees exception rates by type."
-
-### Visual:
-Tab 4 — Corridor performance table, success rate chart, latency comparison, FX rates
-
----
-
-## Act 5: Close (3:15 - 3:30)
-
-### Voiceover:
-"Real-time payments visibility from a single platform. Snowflake Dynamic Tables for zero-orchestration data pipelines. Amazon Bedrock for intelligent exception resolution. And QuickSight for executive reporting. Every payment tracked, every SLA monitored, every exception analyzed."
+- [ ] Verify Dynamic Tables: `SHOW DYNAMIC TABLES IN DATABASE FSI_PAYMENTS` (all ACTIVE)
+- [ ] Open Streamlit: `FSI_PAYMENTS.APP.PAYMENTS_HUB_APP`
+- [ ] Confirm exception queue has open items: Tab 3 should show 20+ exceptions
+- [ ] Test Bedrock: Select an AML_HOLD exception, click Analyze — confirm response
+- [ ] Open Snowsight in Chrome (full screen, dark mode recommended)
+- [ ] Audio: quiet room, external mic
+- [ ] Resolution: 1920x1080
 
 ---
 
-## Demo Day Checklist
+## Script
 
-- [ ] Bedrock secret populated with valid AWS credentials
-- [ ] Dynamic Tables showing ACTIVE status (3 DTs)
-- [ ] Exception queue showing 20+ open exceptions
-- [ ] At least 1 CRITICAL and 1 HIGH severity exception visible
-- [ ] Corridor stats populated with all 6 corridors
+### [0:00–0:30] THE PROBLEM (Show: Architecture Diagram)
+
+> *"Singapore processes billions in cross-border payments daily — FAST, PayNow, SWIFT, GIRO — each with different settlement SLAs. PayNow must clear in 5 minutes. SWIFT in 4 hours. When exceptions hit — sanctions screening, AML holds, format errors — every minute of delay costs money and risks MAS regulatory breach. How do you monitor thousands of payments per hour and resolve exceptions before SLAs are breached?"*
+
+**Screen**: Architecture diagram (Kinesis/S3 → Snowpipe → RAW → Dynamic Tables → Bedrock → Streamlit/QuickSight)
+
+---
+
+### [0:30–1:00] DATA PIPELINE (Show: Snowsight)
+
+> *"Payment messages stream from clearing systems — MEPS+, FAST, SWIFT GPI — into Snowflake via Snowpipe. Dynamic Tables automatically enrich each payment: convert to SGD, calculate the SLA deadline based on payment type, and track settlement status. The exception queue surfaces open issues prioritized by severity and age. All refreshing every 5 minutes. Zero orchestration."*
+
+**Screen**: Run in Snowsight:
+```sql
+SELECT 'PAYMENTS' AS SOURCE, COUNT(*) FROM FSI_PAYMENTS.RAW.PAYMENTS_RAW
+UNION ALL SELECT 'ENRICHED (DT)', COUNT(*) FROM FSI_PAYMENTS.CURATED.PAYMENT_ENRICHED
+UNION ALL SELECT 'OPEN EXCEPTIONS', COUNT(*) FROM FSI_PAYMENTS.CURATED.EXCEPTION_QUEUE;
+```
+Then show PAYMENT_ENRICHED columns — highlight SLA_DEADLINE, SLA_STATUS (ON_TIME / AT_RISK / BREACHED)
+
+---
+
+### [1:00–1:30] PAYMENT MONITOR (Show: Streamlit Tab 1)
+
+> *"The Payments Ops dashboard shows real-time KPIs. 500 payments processed, over 60 million SGD in volume, 90% success rate. The corridor breakdown shows SG-MY as the highest volume — consistent with Singapore-Malaysia remittance flows. SG-HK second, driven by trade settlement between the two financial centres."*
+
+**Screen**: Tab 1 → Show 4 KPI cards → Volume by corridor chart → Payment type distribution → Scroll to recent payments table
+
+---
+
+### [1:30–2:10] EXCEPTION QUEUE + BEDROCK (Show: Streamlit Tab 3)
+
+> *"26 open exceptions need attention. Here's a CRITICAL one — a sanctions hit on a SG-HK corridor payment. SGD 420,000 to HSBC Hong Kong. The beneficiary name partially matches the OFAC SDN list. One click sends this to Amazon Bedrock for intelligent triage."*
+
+> *"Bedrock recommends: ESCALATE. Risk level CRITICAL. Resolution steps: engage MLRO, request enhanced due diligence documentation, run full name screening against consolidated sanctions list. Estimated resolution: 48 hours. Regulatory note: MAS Notice 626 applies — report to STRO if suspicion confirmed."*
+
+**Screen**: Tab 3 → Show 26 open exceptions → Select SANCTIONS_HIT → Show details panel → Click "Analyze with Amazon Bedrock" → Show full response: action, risk, steps, regulatory considerations
+
+---
+
+### [2:10–2:30] SETTLEMENT TRACKER (Show: Streamlit Tab 2)
+
+> *"The settlement tracker shows SLA compliance at a glance. 90% on time. FAST payments settling in under 10 seconds on average. SWIFT at 2 hours — well within the 4-hour window. Bank reconciliation confirms net positions across all 5 Singapore sender banks."*
+
+**Screen**: Tab 2 → SLA progress bar → Performance by payment type table → Bank reconciliation view
+
+---
+
+### [2:30–3:15] ANALYTICS + QUICKSIGHT (Show: Tab 4, then QuickSight)
+
+> *"The analytics tab gives corridor-level intelligence. Success rates, average latency by payment type, exception distribution. This feeds directly into QuickSight for the executive view. The CFO asks: 'What is the total payment volume by corridor?' — answered instantly by Amazon Q."*
+
+**Screen**: Tab 4 — Corridor stats table, success rate chart, latency chart → Switch to QuickSight → Q bar: "What is the total volume by corridor?"
+
+---
+
+### [3:15–3:30] CLOSE
+
+> *"Real-time payments visibility from a single platform. Snowflake Dynamic Tables for zero-orchestration data pipelines. Amazon Bedrock for intelligent exception resolution. QuickSight for executive reporting. Every payment tracked, every SLA monitored, every exception analyzed — across all Singapore corridors."*
+
+---
 
 ## Key Demo Questions to Anticipate
 
-1. "How does this handle real-time vs batch?"
-   → Dynamic Tables with 5-min lag for near-real-time. For sub-second, use Snowpipe Streaming.
+1. **"How does this handle real-time vs batch?"**
+   → Dynamic Tables with 5-min lag for near-real-time. For sub-second (FAST payments), use Snowpipe Streaming with 1-second latency.
 
-2. "What about ISO 20022 migration?"
-   → S3 can ingest any message format. RAW schema is VARIANT-ready for ISO 20022 XML.
+2. **"What about ISO 20022 migration?"**
+   → RAW schema accepts any format via S3. JSON today, ISO 20022 XML tomorrow — same pipeline, different parser.
 
-3. "How does this scale during peak (Chinese New Year, 11.11)?"
-   → Snowflake elastic scaling + multi-cluster warehouses handle 10x spikes automatically.
+3. **"How does this scale during peak (Chinese New Year remittances, 11.11)?"**
+   → Snowflake multi-cluster warehouses auto-scale 10x. No capacity planning needed.
 
-4. "What about the MAS payment regulations?"
-   → Payment Services Act compliance built into the exception rules. AML_HOLD threshold matches MAS Notice 626.
+4. **"What about MAS payment regulations?"**
+   → Payment Services Act compliance built into exception rules. AML_HOLD thresholds match MAS Notice 626. STR deadline tracking built into SLA logic.
+
+5. **"Can this connect to SWIFT gpi Tracker?"**
+   → Yes. SWIFT gpi webhooks → Amazon EventBridge → S3 → Snowpipe. Same pipeline, new data source.
