@@ -159,14 +159,6 @@ Expected: 500 payments, 500 settlements, 500 enriched, ~26 open exceptions.
 
 ---
 
-## SE Demo Account Notes
-
-- **Network policy**: QuickSight us-west-2 IPs (54.70.204.128/27) must be allowed for `QUICKSIGHT_FSI_SVC` user.
-- **Bedrock model**: Uses `us.anthropic.claude-sonnet-4-5-20250929-v1:0` (the `-20250514` version is legacy/blocked).
-- **Dynamic Table lag**: 5 minutes. For sub-second latency demo, switch to Snowpipe Streaming.
-
----
-
 ## Legal
 
 This is a personal project and is **not an official Snowflake offering**. It comes with no support or warranty. Do not use in production without thorough review and testing.
