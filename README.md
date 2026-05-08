@@ -16,22 +16,22 @@
 
 ## Architecture
 
+A Singapore cross-border payments hub built on **Snowflake** (Snowpipe / Streaming, Dynamic Tables, External Access) and **AWS** (S3, Kinesis, Bedrock Claude, QuickSight + Amazon Q). Payments arrive via Kinesis or S3; Snowflake enriches with FX and SLA; Bedrock investigates exceptions; QuickSight serves the operations dashboard.
+
+```mermaid
+flowchart LR
+    S3[S3 batch payments] --> SP[Snowpipe]
+    KIN[Kinesis real-time payments] --> SPS[Snowpipe Streaming]
+    SP --> SF[Snowflake RAW PAYMENTS / SETTLEMENTS / FX_RATES / EXCEPTIONS]
+    SPS --> SF
+    SF --> DT[Dynamic Tables PAYMENT_ENRICHED / CORRIDOR_STATS / EXCEPTION_QUEUE]
+    DT --> EA[External Access SigV4]
+    EA --> BR[Amazon Bedrock Claude]
+    BR --> ANEXC[ANALYZE_EXCEPTION SP]
+    DT --> ST[Streamlit Payments Hub]
+    DT --> QS[QuickSight DIRECT_QUERY + Amazon Q]
 ```
-AWS Data Plane                     Snowflake AI Data Cloud
-───────────────────                ──────────────────────────────────
-Amazon S3 / Kinesis        ──────▶ RAW (Snowpipe / Streaming)
-                                   ├── PAYMENTS_RAW (500 txns)
-                                   ├── SETTLEMENTS_RAW
-                                   ├── FX_RATES_RAW
-                                   └── EXCEPTIONS_RAW
-                                   CURATED (Dynamic Tables, 5 min lag)
-                                   ├── PAYMENT_ENRICHED (FX + SLA calc)
-                                   ├── CORRIDOR_STATS (aggregates)
-                                   └── EXCEPTION_QUEUE (open, prioritized)
-Amazon Bedrock (Claude)    ◀─────▶ AI (External Access, SigV4 → Converse API)
-                                   └── ANALYZE_EXCEPTION SP
-Amazon QuickSight          ◀─────  CURATED Views (DIRECT_QUERY)
-```
+
 
 | Layer | AWS | Snowflake |
 |---|---|---|
