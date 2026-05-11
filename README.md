@@ -20,6 +20,27 @@ flowchart LR
     DT --> QS[QuickSight DIRECT_QUERY + Amazon Q]
 ```
 
+## Snowflake Capabilities
+
+| Capability | Implementation |
+|-----------|---------------|
+| Dynamic Tables | PAYMENT_ENRICHED / CORRIDOR_STATS / EXCEPTION_QUEUE |
+| Snowpipe / Streaming | S3 batch + Kinesis real-time payment ingestion |
+| Cortex Agent | PaymentsAnalyst + Semantic View tools |
+| Semantic View | Structured analytics over payments, corridors, exceptions |
+| Streamlit | Payments Hub with corridor monitoring and exception triage |
+| External Access | SigV4-signed calls to Amazon Bedrock for exception analysis |
+
+## AWS Services
+
+| Service | Role in Demo |
+|---------|-------------|
+| Amazon S3 | Batch payment file landing zone |
+| Amazon Kinesis | Real-time payment stream ingestion |
+| Amazon Bedrock | Claude-powered exception analysis and resolution |
+| Amazon QuickSight | Executive payments operations dashboard |
+| Amazon Q | Natural language analytics for CFO/CRO |
+
 ## Personas
 
 | Persona | Role | Key Questions |
